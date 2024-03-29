@@ -17,7 +17,7 @@ settings = {
     'toolsDir': os.path.join(scriptDir, 'tools'),           # The patch tools are downloaded to the 'tools' subdirectory
     'optionsDir': scriptDir,                                # The patch  configuration options are in the 'options' subdirectory
     'keystore': os.path.join(scriptDir, 'patch.keystore'),  # The keystore to sign the patched APKs is next to the script
-    'defaultPatchSource': 'rvx',                            # Select whether the default provider should be ReVanced or ReVancedExtended
+    'defaultPatchSource': 'rv',                            # Select whether the default provider should be ReVanced or ReVancedExtended
     'patchSources': {
         'rv': {
             'patches': {
@@ -105,7 +105,7 @@ class Patcher:
                 '--merge=' + self.toolPaths['integrations'],
                 '--options=' + os.path.join(self.optionsDir, optionsFile),
                 '--keystore=' + self.keystorePath,
-                '--resource-cache=' + tempDir,
+                '--temporary-files-path=' + tempDir,
                 '--out=' + outPath,
                 srcPath
             ], stdout=sys.stdout, stderr=sys.stderr, check=True)
