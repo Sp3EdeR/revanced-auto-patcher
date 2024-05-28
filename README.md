@@ -29,32 +29,40 @@ The original version of the application must be downloaded before patching can b
 * [YouTube](https://www.apkmirror.com/apk/google-inc/youtube/)
 * [YouTube Music](https://www.apkmirror.com/apk/google-inc/youtube-music/)
 
-# Default Usage
-By default, the script uses [ReVanced Extended patches](https://github.com/inotia00/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
+# Default Usage - Automatic Source Downloading
+This method automatically downloads everything needed (from [APKMirror](https://www.apkmirror.com) and [Github](https://github.com)), and creates the patched APK file. By default, the script uses [ReVanced Extended patches](https://github.com/inotia00/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
 
 ```
 ReVanced
-└── Sources
-    ├── patch.py
-    ├── SomeAppToPatch 10.5.2.apk
-    └── OtherAppToPatch 1.0.0.apk
+└── patch.py
+```
+
+Then run `python patch.py --help` and look at the output in the terminal. Select one or more applications from the list of supported ones, and run `python patch.py <app name>` or `python patch.py <app name> <app2 name> ...`. The patched apk will be created in the ReVanced directory. The following section documents the other files created.
+
+# Default Usage - Manual Source Downloading
+This is an alternative method that requires you to get the APK file for the original, unpatched application. By default, the script uses [ReVanced Extended patches](https://github.com/inotia00/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
+
+```
+ReVanced
+├── patch.py
+├── SomeAppToPatch 10.5.2.apk
+└── OtherAppToPatch 1.0.0.apk
 ```
 
 Then run `python patch.py`. After the script finishes running, you will get the following folder structure:
 
 ```
 ReVanced Extended
-├── Sources
-│   ├── tools
-│   │   ├── revanced-cli-*.*.*-all.jar
-│   │   ├── revanced-integrations-*.*.*.apk
-│   │   └── revanced-patches-*.*.*.jar
-│   ├── patch.keystore
-│   ├── patch.py
-│   ├── SomeAppToPatch.json
-│   ├── SomeAppToPatch 10.5.2.apk
-│   ├── OtherAppToPatch.json
-│   └── OtherAppToPatch 1.0.0.apk
+├── tools
+│   ├── revanced-cli-*.*.*-all.jar
+│   ├── revanced-integrations-*.*.*.apk
+│   └── revanced-patches-*.*.*.jar
+├── patch.keystore
+├── patch.py
+├── SomeAppToPatch.json
+├── SomeAppToPatch 10.5.2.apk
+├── OtherAppToPatch.json
+├── OtherAppToPatch 1.0.0.apk
 ├── RVX SomeAppToPatch 10.5.2.apk
 └── RVX OtherAppToPatch 1.0.0.apk
 ```
