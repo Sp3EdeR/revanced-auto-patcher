@@ -20,7 +20,7 @@ settings = {
     'download': {
         'arch': 'arm64-v8a'                                 # The architecture of downloaded APKs: armeabi-v7a or arm64-v8a or x86 or x86_64.
     },
-    'defaultPatchSource': 'rvx',                            # Select whether the default provider should be ReVanced or ReVancedExtended
+    'defaultPatchSource': 'rv',                             # Select whether the default provider should be ReVanced or ReVancedExtended
     'patchSources': {
         'rv': {
             'patches': {

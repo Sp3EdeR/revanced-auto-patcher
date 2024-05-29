@@ -30,7 +30,7 @@ The original version of the application must be downloaded before patching can b
 * [YouTube Music](https://www.apkmirror.com/apk/google-inc/youtube-music/)
 
 # Default Usage - Automatic Source Downloading
-This method automatically downloads everything needed (from [APKMirror](https://www.apkmirror.com) and [Github](https://github.com)), and creates the patched APK file. By default, the script uses [ReVanced Extended patches](https://github.com/inotia00/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
+This method automatically downloads everything needed (from [APKMirror](https://www.apkmirror.com) and [Github](https://github.com)), and creates the patched APK file. By default, the script uses [ReVanced patches](https://github.com/ReVanced/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
 
 ```
 ReVanced
@@ -40,7 +40,7 @@ ReVanced
 Then run `python patch.py --help` and look at the output in the terminal. Select one or more applications from the list of supported ones, and run `python patch.py <app name>` or `python patch.py <app name> <app2 name> ...`. The patched apk will be created in the ReVanced directory. The following section documents the other files created.
 
 # Default Usage - Manual Source Downloading
-This is an alternative method that requires you to get the APK file for the original, unpatched application. By default, the script uses [ReVanced Extended patches](https://github.com/inotia00/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
+This is an alternative method that requires you to get the APK file for the original, unpatched application. By default, the script uses [ReVanced patches](https://github.com/ReVanced/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
 
 ```
 ReVanced
@@ -52,7 +52,7 @@ ReVanced
 Then run `python patch.py`. After the script finishes running, you will get the following folder structure:
 
 ```
-ReVanced Extended
+ReVanced
 ├── tools
 │   ├── revanced-cli-*.*.*-all.jar
 │   ├── revanced-integrations-*.*.*.apk
@@ -63,13 +63,13 @@ ReVanced Extended
 ├── SomeAppToPatch 10.5.2.apk
 ├── OtherAppToPatch.json
 ├── OtherAppToPatch 1.0.0.apk
-├── RVX SomeAppToPatch 10.5.2.apk
-└── RVX OtherAppToPatch 1.0.0.apk
+├── RV SomeAppToPatch 10.5.2.apk
+└── RV OtherAppToPatch 1.0.0.apk
 ```
 
 Where the created directories / files are:
 
-* `tools`: Contains the downloaded ReVanced Extended patches used to patch your APK. Keeping these files can save internet bandwidth when re-patching your APKs.
+* `tools`: Contains the downloaded ReVanced patches used to patch your APK. Keeping these files can save internet bandwidth when re-patching your APKs.
 * `patch.keystore`: Your unique keys with which the generated APKs were signed. Keep this file to be able to upgrade existing, installed software with newer versions without needing to uninstall the older version.
 * `*.json` files: These files store patch options for the application. Initially these contain default options, but you can edit these files to build customised versions of the patched application.
 * `RVX *.apk`: These are the generated, patched APKs, ready for you to install them.
@@ -88,16 +88,16 @@ The text lines following this contain the configuration of how the script behave
 For example, to create a directory that applies ReVanced patches, set up a directory as explained in the [Default Usage section](#default-usage), then edit the following line of patch.py from:
 
 ```py
-'defaultPatchSource': 'rvx',
+'defaultPatchSource': 'rv',
 ```
 
 to:
 
 ```py
-'defaultPatchSource': 'rv',
+'defaultPatchSource': 'rvx',
 ```
 
-This makes the script use ReVanced patches instead of ReVanced Extended in that folder. The usage remains the same otherwise.
+This makes the script use ReVanced Extended patches instead of ReVanced in that folder. The usage remains the same otherwise.
 
 # Command-line Options
 
