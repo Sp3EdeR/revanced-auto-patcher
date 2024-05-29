@@ -20,44 +20,54 @@ settings = {
     'download': {
         'arch': 'arm64-v8a'                                 # The architecture of downloaded APKs: armeabi-v7a or arm64-v8a or x86 or x86_64.
     },
-    'defaultPatchSource': 'rv',                             # Select whether the default provider should be ReVanced or ReVancedExtended
-    'patchSources': {
-        'rv': {
-            'patches': {
-                'proj': 'revanced/revanced-patches',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/java-archive',         # The content type of the file (for download identification)
-            },
-            'integrations': {
-                'proj': 'revanced/revanced-integrations',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/vnd.android.package-archive', # The content type of the file (for download identification)
-            },
-            'cli': {
-                'proj': 'revanced/revanced-cli',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/java-archive',         # The content type of the file (for download identification)
-            },
-            'prepend': 'RV '                                # Prepend this to the patched output file names
+    'defaultPatchSource': 'rv'                              # Select whether the default provider should be ReVanced or ReVancedExtended
+}
+# This map configures usable patch sources.
+# * rv defines ReVanced, rvx defines ReVanced Extended.
+#   Each defines 3 tools: patches, integrations, cli, which are downloaded from github:
+#   * proj field defines the github project.
+#   * ver defines the target tool version to download (latest by default).
+#   * type defines the MIME type of the binary to download.
+# * subdir defines the subdir under the tools dir to which to download. Avoids RV/RVX collisions.
+# * prepend defines a tag to put before the patched executable name.
+patchSources = {
+    'rv': {
+        'patches': {
+            'proj': 'revanced/revanced-patches',
+            'ver': 'latest',
+            'type': 'application/java-archive',
         },
-        'rvx': {
-            'patches': {
-                'proj': 'inotia00/revanced-patches',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/jar',                  # The content type of the file (for download identification)
-            },
-            'integrations': {
-                'proj': 'inotia00/revanced-integrations',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/vnd.android.package-archive', # The content type of the file (for download identification)
-            },
-            'cli': {
-                'proj': 'inotia00/revanced-cli',
-                'ver': 'latest',                            # Use 'latest' or specify the desired release version
-                'type': 'application/jar',                  # The content type of the file (for download identification)
-            },
-            'prepend': 'RVX '                               # Prepend this to the patched output file names
-        }
+        'integrations': {
+            'proj': 'revanced/revanced-integrations',
+            'ver': 'latest',
+            'type': 'application/vnd.android.package-archive',
+        },
+        'cli': {
+            'proj': 'revanced/revanced-cli',
+            'ver': 'latest',
+            'type': 'application/java-archive',
+        },
+        'subdir': 'RV',
+        'prepend': 'RV '
+    },
+    'rvx': {
+        'patches': {
+            'proj': 'inotia00/revanced-patches',
+            'ver': 'latest',
+            'type': 'application/jar',
+        },
+        'integrations': {
+            'proj': 'inotia00/revanced-integrations',
+            'ver': 'latest',
+            'type': 'application/vnd.android.package-archive',
+        },
+        'cli': {
+            'proj': 'inotia00/revanced-cli',
+            'ver': 'latest',
+            'type': 'application/jar',
+        },
+        'subdir': 'RVX',
+        'prepend': 'RVX '
     }
 }
 # This map helps the auto-downloader interface
@@ -284,7 +294,7 @@ class Patcher:
         self.outPrepend = patchSourceData['prepend']
         self.outDir = args.outDir
         Patcher.__ensureDirectory(self.outDir)
-        self.toolsDir = args.toolsDir
+        self.toolsDir = os.path.join(args.toolsDir, patchSourceData['subdir'])
         Patcher.__ensureDirectory(self.toolsDir)
         self.optionsDir = args.optionsDir
         Patcher.__ensureDirectory(self.optionsDir)
@@ -503,14 +513,14 @@ def main():
     parser.add_argument('--optionsDir', default=os.path.abspath(settings['optionsDir']), help='The directory to store patch options files in (default: %(default)s)')
     parser.add_argument('--outDir', '-o', default=os.path.abspath(settings['outDir']), help='The directory to write patched APKs to (default: %(default)s)')
     parser.add_argument(
-        '--patchSrc', choices=settings['patchSources'], default=settings['defaultPatchSource'],
-        type=lambda x : settings['patchSources'][x], help='The patch source to use. Use "rv" for ReVanced and "rvx" for ReVanced Extended (default: %(default)s).')
+        '--patchSrc', choices=patchSources, default=settings['defaultPatchSource'],
+        type=lambda x : patchSources[x], help='The patch source to use. Use "rv" for ReVanced and "rvx" for ReVanced Extended (default: %(default)s).')
     parser.add_argument('--toolsDir', default=os.path.abspath(settings['toolsDir']), help='The directory to store tools and patches in (default: %(default)s)')
     for tool in Patcher.tools:
         parser.add_argument(
             '--{}-version'.format(tool),
             type=lambda str : str if re.match(r'^latest|v?\d+(?:\.\d+)*(?:-[^ ]+)?$', str) else raise_(argparse.ArgumentTypeError("invalid version")),
-            default=settings['patchSources'][settings['defaultPatchSource']][tool]['ver'], help='The tool version to use (default: %(default)s)')
+            default=patchSources[settings['defaultPatchSource']][tool]['ver'], help='The tool version to use (default: %(default)s)')
     args = parser.parse_args()
 
     if not Patcher.CheckJava():

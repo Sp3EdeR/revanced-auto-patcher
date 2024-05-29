@@ -54,9 +54,10 @@ Then run `python patch.py`. After the script finishes running, you will get the 
 ```
 ReVanced
 ├── tools
-│   ├── revanced-cli-*.*.*-all.jar
-│   ├── revanced-integrations-*.*.*.apk
-│   └── revanced-patches-*.*.*.jar
+|   └── RV
+│       ├── revanced-cli-*.*.*-all.jar
+│       ├── revanced-integrations-*.*.*.apk
+│       └── revanced-patches-*.*.*.jar
 ├── patch.keystore
 ├── patch.py
 ├── SomeAppToPatch.json
