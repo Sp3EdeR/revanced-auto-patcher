@@ -236,11 +236,6 @@ appMap = {
         'repo': 'twitch',
         'arch': 'universal'
     },
-    'VSCO': {
-        'package': 'com.vsco.cam',
-        'org': 'vsco',
-        'repo': 'vsco-cam'
-    },
     'WarnWetter': {
         'package': 'de.dwd.warnapp',
         'org': 'deutscher-wetterdienst',
