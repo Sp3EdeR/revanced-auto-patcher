@@ -286,7 +286,7 @@ class Patcher:
     tools = ['cli', 'patches', 'integrations']
 
     def __init__(self, args):
-        patchSourceData = args.patchSrc
+        patchSourceData = patchSources[args.patchSrc]
         self.outPrepend = patchSourceData['prepend']
         self.outDir = args.outDir
         Patcher.__ensureDirectory(self.outDir)
@@ -508,8 +508,9 @@ def main():
     parser.add_argument('--optionsDir', default=os.path.abspath(settings['optionsDir']), help='The directory to store patch options files in (default: %(default)s)')
     parser.add_argument('--outDir', '-o', default=os.path.abspath(settings['outDir']), help='The directory to write patched APKs to (default: %(default)s)')
     parser.add_argument(
-        '--patchSrc', choices=patchSources, default=settings['defaultPatchSource'],
-        type=lambda x : patchSources[x], help='The patch source to use. Use "rv" for ReVanced and "rvx" for ReVanced Extended (default: %(default)s).')
+        '--patchSrc', choices=patchSources.keys(), default=settings['defaultPatchSource'],
+        type=lambda x : x if x in patchSources.keys() else raise_(argparse.ArgumentTypeError("invalid version")),
+        help='The patch source to use. Use "rv" for ReVanced and "rvx" for ReVanced Extended (default: %(default)s).')
     parser.add_argument('--toolsDir', default=os.path.abspath(settings['toolsDir']), help='The directory to store tools and patches in (default: %(default)s)')
     for tool in Patcher.tools:
         parser.add_argument(
