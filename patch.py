@@ -18,7 +18,8 @@ settings = {
     'optionsDir': scriptDir,                                # The patch  configuration options are in the 'options' subdirectory
     'keystore': os.path.join(scriptDir, 'patch.keystore'),  # The keystore to sign the patched APKs is next to the script
     'download': {
-        'arch': 'arm64-v8a'                                 # The architecture of downloaded APKs: armeabi-v7a or arm64-v8a or x86 or x86_64.
+        'arch': 'arm64-v8a',                                # The architecture of downloaded APKs: armeabi-v7a or arm64-v8a or x86 or x86_64.
+        'dpi': 'nodpi'                                      # The DPI of the downloaded APIs: 240dpi, 320dpi, ...
     },
     'defaultPatchSource': 'rv'                              # Select whether the default provider should be ReVanced or ReVancedExtended
 }
@@ -376,13 +377,12 @@ class Patcher:
             print('### Error: {} is not supported by the patcher.'.format(appId))
             return None
         apkmdConfig = {
-            'options': {
-                'arch': appData['arch'] if 'arch' in appData.keys() else settings['download']['arch'],
-            },
             'apps': [{
-                'name': '{} {}'.format(appId, appVer if appVer else 'latest'),
+                'outFile': '{} {}'.format(appId, appVer if appVer else 'latest'),
                 'org': appData['org'],
-                'repo': appData['repo']
+                'repo': appData['repo'],
+                'arch': appData['arch'] if 'arch' in appData.keys() else settings['download']['arch'],
+                'dpi': appData['dpi'] if 'dpi' in appData.keys() else settings['download']['dpi']
             }]
         }
         if appVer != None:
@@ -401,7 +401,7 @@ class Patcher:
                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 check=True)
             path = os.path.join(
-                tempfile.gettempdir(), 'downloads', apkmdConfig['apps'][0]['name'] + '.apk')
+                tempfile.gettempdir(), apkmdConfig['apps'][0]['outFile'] + '.apk')
             if not os.path.exists(path):
                 print('### Failed to find a correct version of {} or blocked by server!'.format(appId))
                 return None
