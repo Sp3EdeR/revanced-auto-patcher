@@ -72,7 +72,7 @@ Where the created directories / files are:
 
 * `tools`: Contains the downloaded ReVanced patches used to patch your APK. Keeping these files can save internet bandwidth when re-patching your APKs.
 * `patch.keystore`: Your unique keys with which the generated APKs were signed. Keep this file to be able to upgrade existing, installed software with newer versions without needing to uninstall the older version.
-* `*.json` files: These files store patch options for the application. Initially these contain default options, but you can edit these files to build customised versions of the patched application.
+* `*.json` files: These files store patch options for the application. Since ReVanced v5.0, these files are deprecated, and should be deleted. To customize the patches, see the [Command-line Options](#command-line-options).
 * `RVX *.apk`: These are the generated, patched APKs, ready for you to install them.
 
 # Edited Usage

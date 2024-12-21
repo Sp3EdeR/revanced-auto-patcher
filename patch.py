@@ -15,7 +15,7 @@ settings = {
     'srcDir': scriptDir,                                    # Source APKs in the script's directory
     'outDir': scriptDir,                                    # Patched APKs written to the script's directory
     'toolsDir': os.path.join(scriptDir, 'tools'),           # The patch tools are downloaded to the 'tools' subdirectory
-    'optionsDir': scriptDir,                                # The patch  configuration options are in the 'options' subdirectory
+    'optionsDir': scriptDir,                                # The patch configuration options are in the 'options' subdirectory
     'keystore': os.path.join(scriptDir, 'patch.keystore'),  # The keystore to sign the patched APKs is next to the script
     'download': {
         'arch': 'arm64-v8a',                                # The architecture of downloaded APKs: armeabi-v7a or arm64-v8a or x86 or x86_64.
@@ -36,17 +36,17 @@ patchSources = {
         'patches': {
             'proj': 'revanced/revanced-patches',
             'ver': 'latest',
-            'type': 'application/java-archive',
+            'type': r'application/java-archive',
         },
         'integrations': {
             'proj': 'revanced/revanced-integrations',
             'ver': 'latest',
-            'type': 'application/vnd.android.package-archive',
+            'type': r'application/vnd\.android\.package-archive',
         },
         'cli': {
             'proj': 'revanced/revanced-cli',
             'ver': 'latest',
-            'type': 'application/java-archive',
+            'type': r'application/java-archive',
         },
         'subdir': 'RV',
         'prepend': 'RV '
@@ -55,17 +55,17 @@ patchSources = {
         'patches': {
             'proj': 'inotia00/revanced-patches',
             'ver': 'latest',
-            'type': 'application/jar',
+            'type': r'application/jar|application/octet-stream',
         },
         'integrations': {
             'proj': 'inotia00/revanced-integrations',
             'ver': 'latest',
-            'type': 'application/vnd.android.package-archive',
+            'type': r'application/vnd\.android\.package-archive',
         },
         'cli': {
             'proj': 'inotia00/revanced-cli',
             'ver': 'latest',
-            'type': 'application/jar',
+            'type': r'application/jar|application/java-archive',
         },
         'subdir': 'RVX',
         'prepend': 'RVX '
@@ -286,6 +286,8 @@ class Patcher:
     tools = ['cli', 'patches', 'integrations']
 
     def __init__(self, args):
+        self.initCliVersion(args.cli_version)
+        self.patchSrc = args.patchSrc
         patchSourceData = patchSources[args.patchSrc]
         self.outPrepend = patchSourceData['prepend']
         self.outDir = args.outDir
@@ -301,10 +303,18 @@ class Patcher:
                 self.toolsDir,
                 project=patchSourceData[tool]['proj'],
                 version=getattr(args, tool + '_version'),
-                content_type=patchSourceData[tool]['type'])
+                content_type_filter=patchSourceData[tool]['type'])
         self.toolPaths = {
             i: glob.glob(os.path.join(self.toolsDir, '*{}*'.format(i)))[0] for i in self.tools
         }
+
+    def initCliVersion(self, cliVersion):
+        is5 = cliVersion == 'latest' or 5 <= int(re.sub(r'^v?(\d+).*$', r'\1', cliVersion))
+        if is5:
+            self.cliVersion = 5
+            self.tools.remove('integrations') # Since 5.0, integrations are no longer used
+        else:
+            self.cliVersion = 4
 
     @staticmethod
     def CheckJava():
@@ -322,24 +332,31 @@ class Patcher:
             return False
         return True
 
-    def Patch(self, srcPath, optionsPath = None):
+    def Patch(self, srcPath, forwardedArgs = [], optionsPath = None):
         srcFile = os.path.basename(srcPath)
         outPath = os.path.join(self.outDir, self.outPrepend + srcFile)
         optionsFile = optionsPath if optionsPath else os.path.splitext(Patcher.__normalFileName(srcFile))[0] + '.json'
         tempDir = os.path.join(tempfile.gettempdir(), 'revanced-resource-cache')
         print('### Patching {}...'.format(srcFile))
-        try:
-            subprocess.run([
-                'java', '-jar',
-                self.toolPaths['cli'], 'patch',
+        cmd = ['java', '-jar', self.toolPaths['cli'], 'patch']
+        if self.cliVersion == 4:
+            cmd += [
                 '--patch-bundle=' + self.toolPaths['patches'],
                 '--merge=' + self.toolPaths['integrations'],
-                '--options=' + os.path.join(self.optionsDir, optionsFile),
-                '--keystore=' + self.keystorePath,
-                '--temporary-files-path=' + tempDir,
-                '--out=' + outPath,
-                srcPath
-            ], stdout=sys.stdout, stderr=sys.stderr, check=True)
+                '--options=' + os.path.join(self.optionsDir, optionsFile)]
+        elif self.cliVersion == 5:
+            cmd += ['--patches=' + self.toolPaths['patches']]
+            cmd += forwardedArgs
+            if self.patchSrc == 'rvx':
+                cmd += ['--legacy-options=' + os.path.join(self.optionsDir, optionsFile)]
+        else:
+            raise RuntimeError("Unsupported CLI version.")
+        cmd += [
+            '--keystore=' + self.keystorePath,
+            '--temporary-files-path=' + tempDir,
+            '--out=' + outPath, srcPath]
+        try:
+            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr, check=True)
             print('### Finished patching {} successfully!'.format(os.path.abspath(outPath)))
         except subprocess.CalledProcessError:
             print('### Failed to patch {}!'.format(srcFile))
@@ -349,15 +366,13 @@ class Patcher:
         except:
             pass
 
-    def DownloadAndPatch(self, appId):
+    def DownloadAndPatch(self, appId, forwardedArgs = []):
         apkPath = self.Download(appId)
         if apkPath:
-            self.Patch(apkPath, os.path.join(scriptDir, appId + '.json'))
+            self.Patch(
+                apkPath, forwardedArgs=forwardedArgs,
+                optionsPath=os.path.join(scriptDir, appId + '.json'))
             os.remove(apkPath)
-        try:
-            os.rmdir(os.path.dirname(apkPath))
-        except:
-            pass
 
     def Download(self, appId):
         self.__ensureApkmd()
@@ -454,35 +469,41 @@ class Patcher:
     @staticmethod
     def __ensureTool(
         directory, project, version = 'latest',
-        content_type = None, name_filter = None):
+        content_type_filter = None, name_filter = None):
         '''Prepares one ReVanced tool'''
 
         def clearExistingTools(directory, assetName):
             '''Deletes older versions of the given tool'''
-            regex = r'^([^\d]*)v?\d+(?:\.\d+(?:\.\d+)?)?[^\d]*(\.[^\.]+)$'
-            assetGlob = re.sub(regex, r'\1*\2', assetName)
-            for file in glob.glob(os.path.join(directory, assetGlob)):
+            regex = r'^([^\d]{3,})v?\d+(?:\.\d+(?:\.\d+)?)?[^\d]*(\.[^\.]+)$'
+            assetGlob = re.sub(regex, r'\1*.*', assetName)
+            for file in [*glob.glob(os.path.join(directory, assetGlob)),
+                         *glob.glob(os.path.join(directory, 'revanced-' + assetGlob))]:
                 os.remove(file)
 
         if version != 'latest':
             version = 'tags/v' + version.lstrip('v')
         url = 'https://api.github.com/repos/{0}/releases/{1}'.format(project, version)
         releaseData = json.loads(urllib.request.urlopen(url).read())
-        for asset in releaseData['assets']:
-            if ((not content_type or asset['content_type'] == content_type) and
-                (not name_filter or re.match('^{}$'.format(name_filter), asset['name']))):
-                assetName = asset['name']
-                assetVer = releaseData['tag_name'].lstrip('v')
-                if assetVer not in assetName:
-                    assetName = os.path.splitext(assetName)
-                    assetName = ''.join((assetName[0], '-', assetVer, assetName[1]))
-                assetPath = os.path.join(directory, assetName)
-                if (not os.path.exists(assetPath)):
-                    print('### Downloading tool {}...'.format(assetName))
-                    Patcher.__ensureDirectory(directory)
-                    clearExistingTools(directory, assetName)
-                    assetUrl = asset['browser_download_url']
-                    urllib.request.urlretrieve(assetUrl, assetPath)
+        assets = [i for i in releaseData['assets']
+            if (not content_type_filter or
+                re.match('^{}$'.format(content_type_filter), i['content_type'])) and
+               (not name_filter or re.match('^{}$'.format(name_filter), i['name']))]
+        if not assets:
+            print('### Error: No suitable asset found for tool {}!'.format(project))
+            exit(2)
+        for asset in assets:
+            assetName = asset['name']
+            assetVer = releaseData['tag_name'].lstrip('v')
+            if assetVer not in assetName:
+                assetName = os.path.splitext(assetName)
+                assetName = ''.join((assetName[0], '-', assetVer, assetName[1]))
+            assetPath = os.path.join(directory, assetName)
+            if (not os.path.exists(assetPath)):
+                print('### Downloading tool {}...'.format(assetName))
+                Patcher.__ensureDirectory(directory)
+                clearExistingTools(directory, assetName)
+                assetUrl = asset['browser_download_url']
+                urllib.request.urlretrieve(assetUrl, assetPath)
 
 def main():
     def argCheck(x):
@@ -490,6 +511,13 @@ def main():
         if not arg: arg = x if os.path.exists(x) else None
         if not arg: raise argparse.ArgumentTypeError("file or app not found: " + x)
         return arg
+    class ForwardedArg(argparse.Action):
+        def __init__(self, option_strings, dest, nargs=None, **kwargs):
+            if nargs is not None:
+                raise ValueError("nargs not allowed")
+            super().__init__(option_strings, dest, **kwargs)
+        def __call__(self, parser, namespace, values, option_string=None):
+            getattr(namespace, self.dest).append('='.join((option_string, values)))
     parser = argparse.ArgumentParser(
         prog='ReVanced Auto Patcher',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -517,6 +545,7 @@ def main():
             '--{}-version'.format(tool),
             type=lambda str : str if re.match(r'^latest|v?\d+(?:\.\d+)*(?:-[^ ]+)?$', str) else raise_(argparse.ArgumentTypeError("invalid version")),
             default=patchSources[settings['defaultPatchSource']][tool]['ver'], help='The tool version to use (default: %(default)s)')
+    parser.add_argument('--exclusive', '--enable', '-e', '-ei', '--disable', '-d', '-di', '--options', '-O', action=ForwardedArg, default=[], dest='forwarded_args', help='ReVanced patch control options. See revanced-cli docs for more info.')
     args = parser.parse_args()
 
     if not Patcher.CheckJava():
@@ -525,9 +554,9 @@ def main():
     patcher = Patcher(args)
     for path in getattr(args, 'files or apps'):
         if path in appMap.keys():
-            patcher.DownloadAndPatch(path)
+            patcher.DownloadAndPatch(path, forwardedArgs=args.forwarded_args)
         else:
-            patcher.Patch(path)
+            patcher.Patch(path, forwardedArgs=args.forwarded_args)
 
 if __name__ == "__main__":
     main()
