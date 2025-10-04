@@ -435,11 +435,10 @@ class Patcher:
         if not appPackage in output:
             raise RuntimeError("App unsupported by patcher.")
         versions = re.findall(r'^\s*(\d+\.\d+(?:\.\d+)*)\s*$', output, re.MULTILINE)
-        versions = [tuple(map(int, x.split('.'))) for x in versions]
-        versions.sort(reverse=True)
+        versions = [x.split('.') for x in versions]
         if not versions:
             return None
-        return '.'.join(str(x) for x in versions[0])
+        return '.'.join(max(versions, key=lambda t: tuple(map(int, t))))
 
     @staticmethod
     def __ensureDirectory(directory):
