@@ -36,7 +36,7 @@ patchSources = {
         'patches': {
             'proj': 'revanced/revanced-patches',
             'ver': 'latest',
-            'type': r'application/java-archive',
+            'type': r'application/java-archive|text/plain',
         },
         'integrations': {
             'proj': 'revanced/revanced-integrations',
