@@ -327,8 +327,11 @@ class Patcher:
             if (not match or int(match[1]) < 55):
                 print('### The installed java version is too old. Please update it.')
                 return False
-        except subprocess.CalledProcessError(e):
-            print('### Error running java! Please install it and make sure it is in the path.')
+        except subprocess.CalledProcessError:
+            print('### Error running java! Please check and repair your installation.')
+            return False
+        except FileNotFoundError:
+            print('### Cannot find java! Please install it and make sure it is in the path.')
             return False
         return True
 
