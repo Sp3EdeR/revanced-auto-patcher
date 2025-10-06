@@ -446,10 +446,11 @@ class Patcher:
     @staticmethod
     def __ensureDirectory(directory):
         '''Ensures that the path's directory exists'''
-        try:
-            os.makedirs(directory)
-        except FileExistsError:
-            pass
+        if directory:
+            try:
+                os.makedirs(directory)
+            except FileExistsError:
+                pass
 
     @staticmethod
     def __normalFileName(path):
