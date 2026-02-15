@@ -1,13 +1,14 @@
-# ReVanced Automatic Patcher
-This script patches Android applications to change their behaviour. Patches are provided by the [ReVanced](https://github.com/revanced/revanced-patches) or [ReVanced Extended](https://github.com/inotia00/revanced-patches) projects.
+# ReVanced and Morphe Automatic Patcher
+This script patches Android applications to change their behaviour. Patches are provided by the [ReVanced](https://github.com/revanced/revanced-patches) or [Morphe](https://github.com/MorpheApp/morphe-patches) projects. The [ReVanced Extended](https://github.com/inotia00/revanced-patches) project is also supported, but it is no longer active, and not recommended.
 
 ## Prerequisites
 The script requires [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) 3 or above to be installed on the computer. Python can be downloaded from [this link](https://www.python.org/downloads), or your operating system's official package manager. The ReVanced tools require Java SDK 11 or above to be installed on the computer. It is recommended to get it from [this link](https://www.azul.com/downloads/?package=jdk#zulu) or your operating system's official package manager.
 
 ## Patching
-Both [ReVanced](https://github.com/ReVanced) and [ReVanced Extended](https://github.com/inotia00/) support a limited list of applications and versions. Trying to patch an unsupported application or a supported app's unsupported version will result in errors. The list of supported applications and their versions can be found at the following links:
+Both [ReVanced](https://github.com/ReVanced) and [Morphe](https://github.com/MorpheApp/morphe-patches) support a limited list of applications and versions. Trying to patch an unsupported application or a supported app's unsupported version will result in errors. The list of supported applications and their versions can be found at the following links:
 
 * [ReVanced](https://revanced.app/patches) (This site has a short update delay)
+* [Morphe](https://morphe.software/#:~:text=Supported%20Apps) (Scroll down to the Supported Apps section)
 * [ReVanced Extended](https://github.com/inotia00/revanced-patches#readme)
 
 The original version of the application must be downloaded before patching can begin. To download a compatible version of the APK file, it is recommended to get it from [APKMirror](https://www.apkmirror.com/), since that site is a fairly safe download source. Find direct links to popular applications below (but choose compatible versions):
@@ -40,7 +41,7 @@ ReVanced
 Then run `python patch.py --help` and look at the output in the terminal. Select one or more applications from the list of supported ones, and run `python patch.py <app name>` or `python patch.py <app name> <app2 name> ...`. The patched apk will be created in the ReVanced directory. The following section documents the other files created.
 
 # Default Usage - Manual Source Downloading
-This is an alternative method that requires you to get the APK file for the original, unpatched application. By default, the script uses [ReVanced patches](https://github.com/ReVanced/revanced-patches) to modify APKs. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
+This is an alternative method that requires you to get the APK file for the original, unpatched application. By default, the script uses [ReVanced patches](https://github.com/ReVanced/revanced-patches) to modify APKs, but you can select other patchers. Only place supported APKs, and only supported versions in this folder, otherwise the patching will fail. Create the following folder structure:
 
 ```
 ReVanced
@@ -73,7 +74,7 @@ Where the created directories / files are:
 * `tools`: Contains the downloaded ReVanced patches used to patch your APK. Keeping these files can save internet bandwidth when re-patching your APKs.
 * `patch.keystore`: Your unique keys with which the generated APKs were signed. Keep this file to be able to upgrade existing, installed software with newer versions without needing to uninstall the older version.
 * `*.json` files: These files store patch options for the application. Since ReVanced v5.0, these files are deprecated, and should be deleted. To customize the patches, see the [Command-line Options](#command-line-options).
-* `RVX *.apk`: These are the generated, patched APKs, ready for you to install them.
+* `RV *.apk`: These are the generated, patched APKs, ready for you to install them.
 
 # Edited Usage
 
@@ -93,6 +94,14 @@ For example, to create a directory that applies ReVanced patches, set up a direc
 ```
 
 to:
+
+```py
+'defaultPatchSource': 'morphe',
+```
+
+This makes the script use Morphe patches instead of ReVanced in that folder. The usage remains the same otherwise.
+
+or
 
 ```py
 'defaultPatchSource': 'rvx',

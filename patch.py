@@ -69,6 +69,21 @@ patchSources = {
         },
         'subdir': 'RVX',
         'prepend': 'RVX '
+    },
+    'morphe': {
+        'patches': {
+            'proj': 'MorpheApp/morphe-patches',
+            'ver': 'latest',
+            'type': r'application/dash-patch\+xml',
+        },
+        'cli': {
+            'proj': 'MorpheApp/morphe-cli',
+            'ver': 'latest',
+            'type': r'application/java-archive',
+            'name_filter': r'(?:.(?!dev))*'
+        },
+        'subdir': 'Morphe',
+        'prepend': 'Morphe '
     }
 }
 # This map helps the auto-downloader interface
@@ -303,7 +318,9 @@ class Patcher:
                 self.toolsDir,
                 project=patchSourceData[tool]['proj'],
                 version=getattr(args, tool + '_version'),
-                content_type_filter=patchSourceData[tool]['type'])
+                content_type_filter=patchSourceData[tool]['type'],
+                name_filter=patchSourceData[tool]['name_filter'] if 'name_filter' in patchSourceData[tool].keys() else None
+            )
         self.toolPaths = {
             i: glob.glob(os.path.join(self.toolsDir, '*{}*'.format(i)))[0] for i in self.tools
         }
@@ -342,18 +359,7 @@ class Patcher:
         tempDir = os.path.join(tempfile.gettempdir(), 'revanced-resource-cache')
         print('### Patching {}...'.format(srcFile))
         cmd = ['java', '-jar', self.toolPaths['cli'], 'patch']
-        if self.cliVersion == 4:
-            cmd += [
-                '--patch-bundle=' + self.toolPaths['patches'],
-                '--merge=' + self.toolPaths['integrations'],
-                '--options=' + os.path.join(self.optionsDir, optionsFile)]
-        elif self.cliVersion == 5:
-            cmd += ['--patches=' + self.toolPaths['patches']]
-            cmd += forwardedArgs
-            if self.patchSrc == 'rvx':
-                cmd += ['--legacy-options=' + os.path.join(self.optionsDir, optionsFile)]
-        else:
-            raise RuntimeError("Unsupported CLI version.")
+        cmd += self._getPatchOptions(forwardedArgs, optionsFile)
         cmd += [
             '--keystore=' + self.keystorePath,
             '--temporary-files-path=' + tempDir,
@@ -443,6 +449,22 @@ class Patcher:
             return None
         return '.'.join(max(versions, key=lambda t: tuple(map(int, t))))
 
+    def _getPatchOptions(self, forwardedArgs, optionsPath):
+        cmd = []
+        if self.cliVersion == 4:
+            cmd += [
+                '--patch-bundle=' + self.toolPaths['patches'],
+                '--merge=' + self.toolPaths['integrations'],
+                '--options=' + os.path.join(self.optionsDir, optionsPath)]
+        elif self.cliVersion == 5:
+            cmd += ['--patches=' + self.toolPaths['patches']]
+            cmd += forwardedArgs
+            if self.patchSrc == 'rvx':
+                cmd += ['--legacy-options=' + os.path.join(self.optionsDir, optionsPath)]
+        else:
+            raise RuntimeError("Unsupported CLI version.")
+        return cmd
+
     @staticmethod
     def __ensureDirectory(directory):
         '''Ensures that the path's directory exists'''
@@ -508,6 +530,21 @@ class Patcher:
                 assetUrl = asset['browser_download_url']
                 urllib.request.urlretrieve(assetUrl, assetPath)
 
+class MorphePatcher(Patcher):
+    def initCliVersion(self, cliVersion):
+        self.tools.remove('integrations') # Morphe never used integrations
+
+    def _getPatchOptions(self, forwardedArgs, optionsPath):
+        cmd = ['--patches=' + self.toolPaths['patches']]
+        cmd += forwardedArgs
+        return cmd
+
+def makePatcher(args):
+    if args.patchSrc == 'morphe':
+        return MorphePatcher(args)
+    else:
+        return Patcher(args)
+
 def main():
     def argCheck(x):
         arg = next((j for j, l in ((i, i.casefold()) for i in appMap.keys()) if l == x.casefold()), None)
@@ -554,7 +591,7 @@ def main():
     if not Patcher.CheckJava():
         exit(1)
 
-    patcher = Patcher(args)
+    patcher = makePatcher(args)
     for path in getattr(args, 'files or apps'):
         if path in appMap.keys():
             patcher.DownloadAndPatch(path, forwardedArgs=args.forwarded_args)
