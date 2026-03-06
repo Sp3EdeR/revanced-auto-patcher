@@ -404,8 +404,11 @@ class Patcher:
                 'dpi': appData['dpi'] if 'dpi' in appData.keys() else settings['download']['dpi']
             }]
         }
-        if appVer != None:
-            apkmdConfig['apps'][0].update({'version': appVer})
+        for config in apkmdConfig['apps']:
+            if 'arch' in config.keys() and config['arch'] not in ['universal', 'noarch']:
+                config.update({'fallbackArch': 'universal'})
+            if appVer != None:
+                config.update({'version': appVer})
 
         print('### Downloading {}...'.format(appId + (' ' + appVer if appVer else '')))
 
